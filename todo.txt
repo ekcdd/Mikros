@@ -1,0 +1,11 @@
+Todo items for my OS
+
+
+1. Finish off  the keyboard driver, it currently does not support any of the multimedia buttons, everything else *should* be working
+2. Write code that enables/disables keyboard LEDS
+3. Add extra buttons on mouse and the scroller
+
+
+Notes:
+
+Go to  https://wiki.osdev.org/PS/2_Keyboard for ps/2 keyboard info, it has everything you need.

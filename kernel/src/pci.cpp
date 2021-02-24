@@ -10,16 +10,7 @@ namespace PCI{
         g_PageTableManager.MapMemory((void*)functionAddress, (void*)functionAddress);
 
         PCIDeviceHeader* pciDeviceHeader = (PCIDeviceHeader*)functionAddress;
-        if (pciDeviceHeader == nullptr) {
-            GlobalRenderer->Print("warning: enum function ");
-            GlobalRenderer->Print(to_string(function));
-            GlobalRenderer->Print(" at ");
-            GlobalRenderer->Print(to_hstring(deviceAddress));
-            GlobalRenderer->Print(" is null, skipping");
-            GlobalRenderer->Next();
-            return;
 
-        }
         if (pciDeviceHeader->DeviceID == 0) return;
         if (pciDeviceHeader->DeviceID == 0xFFFF) return;
         GlobalRenderer->Print("     ");
@@ -44,16 +35,7 @@ namespace PCI{
         g_PageTableManager.MapMemory((void*)deviceAddress, (void*)deviceAddress);
 
         PCIDeviceHeader* pciDeviceHeader = (PCIDeviceHeader*)deviceAddress;
-        if (pciDeviceHeader == nullptr) {
-            GlobalRenderer->Print("warning: device enum: device ");
-            GlobalRenderer->Print(to_string(device));
-            GlobalRenderer->Print(" at ");
-            GlobalRenderer->Print(to_hstring(busAddress));
-            GlobalRenderer->Print(" is null, skipping");
-            GlobalRenderer->Next();
-            return;
 
-        }
         if (pciDeviceHeader->DeviceID == 0) return;
         if (pciDeviceHeader->DeviceID == 0xFFFF) return;
 
@@ -63,29 +45,16 @@ namespace PCI{
     }
 
     void EnumerateBus(uint64_t baseAddress, uint64_t bus){
-        GlobalRenderer->Print("test 3");
-
         uint64_t offset = bus << 20;
 
         uint64_t busAddress = baseAddress + offset;
-
         g_PageTableManager.MapMemory((void*)busAddress, (void*)busAddress);
-        GlobalRenderer->Print("test 4");
-        PCIDeviceHeader* pciDeviceHeader = (PCIDeviceHeader*)busAddress;
-        GlobalRenderer->Print("test 5");
-        if (pciDeviceHeader == nullptr) {
-            GlobalRenderer->Print("warning: Bus ");
-            GlobalRenderer->Print(to_string(bus));
-            GlobalRenderer->Print(" at ");
-            GlobalRenderer->Print(to_hstring(baseAddress));
-            GlobalRenderer->Print(" is null, skipping");
-            GlobalRenderer->Next();
-            return;
 
-        }
+        PCIDeviceHeader* pciDeviceHeader = (PCIDeviceHeader*)busAddress;
+
         if (pciDeviceHeader->DeviceID == 0) return;
         if (pciDeviceHeader->DeviceID == 0xFFFF) return;
-        GlobalRenderer->Print("test 6");
+
         for (uint64_t device = 0; device < 32; device++){
             EnumerateDevice(busAddress, device);
         }
@@ -93,25 +62,16 @@ namespace PCI{
 
     void EnumeratePCI(ACPI::MCFGHeader* mcfg){
         uint32_t entries = ((mcfg->Header.Length) - sizeof(ACPI::MCFGHeader)) / sizeof(ACPI::DeviceConfig);
-        GlobalRenderer->Print("debug: PCI entries: ");
-        GlobalRenderer->Print(to_hstring(entries));
-        GlobalRenderer->Next();
+
+        if (entries == 0)
+        {
+            GlobalRenderer->Print(COLOUR_ORANGE,"   Warning: no PCI devices detected");
+            GlobalRenderer->Next();
+        }
         for (int t = 0; t < entries; t++){
             ACPI::DeviceConfig* newDeviceConfig = (ACPI::DeviceConfig*)((uint64_t)mcfg + sizeof(ACPI::MCFGHeader) + (sizeof(ACPI::DeviceConfig) * t));
-            GlobalRenderer->Print("debug: device config at ");
-            GlobalRenderer->Print(to_hstring((uint32_t)t));
-            if (newDeviceConfig == nullptr)
-            {
-                GlobalRenderer->Print( " is null");
-
-            }
-            else {
-                GlobalRenderer->Print( " is NOT null");
-            }
             GlobalRenderer->Next();
-            GlobalRenderer->Print("test ");
             for (uint64_t bus = newDeviceConfig->StartBus; bus < newDeviceConfig->EndBus; bus++){
-                GlobalRenderer->Print("test2 ");
                 EnumerateBus(newDeviceConfig->BaseAddress, bus);
             }
         }
